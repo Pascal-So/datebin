@@ -43,3 +43,5 @@ This will produce the following output:
 This data can now for example be used in gnuplot to plot histograms over time.
 
 Using the `-f` command, the number of fields that contain the time information (1-based) can be set. In the above case, this is fields 1 and 2, which is the default, therefore we did not have to specify it. The syntax in general is: `-f<start>-<end>` for a range of fields, where both start and end can be omitted and will be automatically adjusted to the beginning/end of the line. Alternatively, if the information is in a single field, `-f<field>` can be used as well. The date information has to be in a format that is accepted by GNU `date`.
+
+Note that quoting fields will not stop the script from splitting them if the delimiter is found inside the quoted part.
