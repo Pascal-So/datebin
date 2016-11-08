@@ -125,43 +125,28 @@ lineMatch+="$"
 # main loop
 while read line
 do
-    # split the current line by $delimiter
-    IFS="$delimiter" read -ra FIELDS <<< "$line"
-    
-    if [[ ${#FIELDS[@]} -le $startfield ]]; then
-	#ignore lines where startfield is outside the range
-	continue
+    if [[ $line =~ $lineMatch ]]; then
+	
+	if [[ ${#BASH_REMATCH[@]} -ne 4 ]]; then
+	    echo "Regex \"$lineMatch\" does not match thee groups." >&2
+	    exit 1
+	fi
+
+	begin="${BASH_REMATCH[1]}"
+	datefields="${BASH_REMATCH[2]}"
+	end="${BASH_REMATCH[3]}"
+
+	# convert the datefields to a timestamp
+	# this is the speed bottleneck
+	timestamp=$(date -d"$datefields" +%s)
+
+	# now do the actual binning
+	timestamp=$(( $diff * ( $timestamp / $diff) ))    
+
+	echo $begin $timestamp $end
+	
+    else
+	echo "Line \"$line\" does not match regex \"$lineMatch\"." >&2
     fi
-
-    # use temporary variable for end field, because line
-    # length might vary
-    tempEnd=$endfield;
-    if [[ $tempEnd -ge ${#FIELDS[@]} ]]; then
-	tempEnd=$(( ${#FIELDS[@]} - 1 ))
-    fi
-
-    # now we should have always valid, 0-based, inclusive
-    # indexes of the date fields
-
-    len=$(( $tempEnd - $startfield + 1 ))
-    datefields="${FIELDS[@]:$startfield:$len}"
-
-    # convert the datefields to a timestamp
-    timestamp=$(date -d"$datefields" +%s)
-
-    # now do the actual binning
-    timestamp=$(( $diff * ( $timestamp / $diff) ))
-    
-    # now get the remaining fields of the array so that we
-    # can reassemble it later
-
-    front="${FIELDS[@]:0:$startfield}"
-
-    # start fields after datefields from tempEnd + 1
-    backpos=$(( $tempEnd + 1 ))
-    back="${FIELDS[@]:$backpos}"
-
-    # echo the final reassembled line
-    echo $front $timestamp $back
     
 done < "${input_file:-/dev/stdin}"
