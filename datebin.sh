@@ -18,12 +18,6 @@ HELPSTRING+="  -d \tField delimiter, default ' '\n"
 HELPSTRING+="  -w \tBinwidth, default '10 minutes'\n"
 HELPSTRING+="  -h \tPrint this help message\n"
 
-# Using this function to join the fields back together in
-# the end.
-# 
-# Credit to:
-# http://stackoverflow.com/a/17841619/5817996
-function join_by { local IFS="$1"; shift; echo "$*"; }
 
 # get file name if passed as first argument
 if [ $# -ge 1 ] && [ ${1:0:1} != "-" ]; then
