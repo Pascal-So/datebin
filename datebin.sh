@@ -89,53 +89,28 @@ else
     exit 1
 fi
 
-# convert base 1 indexes to base 0
-startfield=$(( $startfield - 1 ))
-endfield=$(( $endfield - 1 ))
-
-#echo "Startfield = $startfield";
-#echo "Endfield = $endfield";
-
 # main loop
 while read line
 do
-    # split the current line by $delimiter
-    IFS="$delimiter" read -ra FIELDS <<< "$line"
+
+    front=""
+    # only try to put a value in `front` if there actually
+    # is something.
+    if [[ $startfield -gt 1 ]]; then
+	front=$(cut -d"$delimiter" -f1-"$( $startfield - 1 )" <<<$line)
+    fi
     
-    if [[ ${#FIELDS[@]} -le $startfield ]]; then
-	#ignore lines where startfield is outside the range
-	continue
-    fi
+    back=$(cut -d"$delimiter" -f"$(( $endfield + 1 ))"- <<<$line)
 
-    # use temporary variable for end field, because line
-    # length might vary
-    tempEnd=$endfield;
-    if [[ $tempEnd -ge ${#FIELDS[@]} ]]; then
-	tempEnd=$(( ${#FIELDS[@]} - 1 ))
-    fi
-
-    # now we should have always valid, 0-based, inclusive
-    # indexes of the date fields
-
-    len=$(( $tempEnd - $startfield + 1 ))
-    datefields="${FIELDS[@]:$startfield:$len}"
+    datefields=$(cut -d"$delimiter" -f"$startfield"-"$endfield" <<<$line)
 
     # convert the datefields to a timestamp
     timestamp=$(date -d"$datefields" +%s)
 
     # now do the actual binning
     timestamp=$(( $diff * ( $timestamp / $diff) ))
-    
-    # now get the remaining fields of the array so that we
-    # can reassemble it later
-
-    front="${FIELDS[@]:0:$startfield}"
-
-    # start fields after datefields from tempEnd + 1
-    backpos=$(( $tempEnd + 1 ))
-    back="${FIELDS[@]:$backpos}"
 
     # echo the final reassembled line
     echo $front $timestamp $back
-    
+        
 done < "${input_file:-/dev/stdin}"
