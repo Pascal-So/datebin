@@ -89,12 +89,38 @@ else
     exit 1
 fi
 
-# convert base 1 indexes to base 0
-startfield=$(( $startfield - 1 ))
-endfield=$(( $endfield - 1 ))
 
-#echo "Startfield = $startfield";
-#echo "Endfield = $endfield";
+# constructing the regex
+
+# the regex will match three groups:
+# - the begin group, everything before the datefields
+# - the datefields, fields containing date information
+# - the end group, everything after the datefields
+
+fieldMatch="[^$delimiter]+$delimiter"
+
+# begin group
+lineMatch="^("
+if [[ $startfield -gt 1 ]]; then
+    # printf without input doesn't work, therefore we have to
+    # wrap the printf in an if block, for the script to work
+    # properly if there is no begin group
+    lineMatch+=$(printf "$fieldMatch%.0s" $(seq 1 $(( $startfield - 1 )) ) )
+fi
+
+# datefields group
+lineMatch+=")(" 
+lineMatch+=$(printf "$fieldMatch%.0s" $(seq $startfield $endfield) )
+lineMatch+="?" # don't necessarily match the delimiter after
+               # the datefields, because there might be no
+               # end group
+
+# end group
+lineMatch+=")(.*)" 
+
+lineMatch+="$"
+
+
 
 # main loop
 while read line
